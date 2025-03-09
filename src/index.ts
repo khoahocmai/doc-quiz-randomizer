@@ -111,6 +111,8 @@ async function main() {
   // Lấy tham số: directory và count
   const folderPathArg = args.find((arg) => arg.startsWith("directory="));
   const countArg = args.find((arg) => arg.startsWith("count="));
+  const rangeArg = args.find((arg) => arg.startsWith("range="));
+
   if (!folderPathArg || !countArg) {
     console.error(
       "Vui lòng cung cấp đường dẫn folder và số lượng câu hỏi (count)."
@@ -121,6 +123,35 @@ async function main() {
 
   const folderPath = folderPathArg.split("=")[1];
   const count = parseInt(countArg.split("=")[1], 10);
+
+  // Xử lý tham số range (nếu có)
+  let startRange = 1;
+  let endRange = Infinity;
+  if (rangeArg) {
+    const rangeParts = rangeArg.split("=")[1].split(",");
+    if (rangeParts.length === 2) {
+      startRange = parseInt(rangeParts[0], 10);
+      endRange = parseInt(rangeParts[1], 10);
+
+      if (
+        isNaN(startRange) ||
+        isNaN(endRange) ||
+        startRange < 1 ||
+        endRange < startRange
+      ) {
+        console.error(
+          "Tham số range không hợp lệ. Định dạng phải là range=START,END với START ≤ END."
+        );
+        process.exit(1);
+      }
+    } else {
+      console.error(
+        "Tham số range không hợp lệ. Định dạng phải là range=START,END."
+      );
+      process.exit(1);
+    }
+  }
+
   if (isNaN(count) || count <= 0) {
     console.error("Tham số count phải là số nguyên dương.");
     process.exit(1);
@@ -150,8 +181,32 @@ async function main() {
       process.exit(1);
     }
 
-    // Tráo thứ tự các câu hỏi và chọn số lượng câu hỏi theo tham số (nếu count > tổng số thì chọn tất cả)
-    const shuffledQuestions = shuffleArray([...questions]);
+    // Lọc câu hỏi theo khoảng range (nếu có)
+    const filteredQuestions = questions.filter((_, index) => {
+      const questionNumber = index + 1; // Đánh số từ 1
+      return questionNumber >= startRange && questionNumber <= endRange;
+    });
+
+    if (filteredQuestions.length === 0) {
+      console.error(
+        `Không có câu hỏi nào trong khoảng ${startRange}-${endRange}.`
+      );
+      process.exit(1);
+    }
+
+    // Kiểm tra xem count có vượt quá số lượng câu hỏi trong khoảng không
+    if (count > filteredQuestions.length) {
+      console.error(
+        `Số lượng câu hỏi yêu cầu (${count}) vượt quá số lượng câu hỏi có trong khoảng (${filteredQuestions.length}).`
+      );
+      console.error(
+        `Vui lòng chọn số lượng câu hỏi nhỏ hơn hoặc bằng ${filteredQuestions.length}.`
+      );
+      process.exit(1);
+    }
+
+    // Tráo thứ tự các câu hỏi đã được lọc theo range (nếu có)
+    const shuffledQuestions = shuffleArray([...filteredQuestions]);
     const selectedQuestions = shuffledQuestions.slice(
       0,
       Math.min(count, shuffledQuestions.length)
@@ -225,7 +280,13 @@ async function main() {
 function displayUsage() {
   console.log("Usage:");
   console.log(
-    '  npm run dev directory="path/to/your/directory" count=NUMBER_OF_QUESTIONS'
+    '  npm run dev directory="path/to/your/directory" count=NUMBER_OF_QUESTIONS [range=START,END]'
+  );
+  console.log("Trong đó:");
+  console.log("  - directory: đường dẫn đến thư mục chứa file questions.docx");
+  console.log("  - count: số lượng câu hỏi cần lấy ngẫu nhiên");
+  console.log(
+    "  - range (tùy chọn): khoảng số thứ tự câu hỏi cần lấy (vd: range=12,34)"
   );
 }
 
