@@ -10,6 +10,7 @@ A Node.js utility for generating a randomized quiz document from a .docx file co
 
 - Parses a .docx file to extract questions and multiple-choice answers.
 - Randomizes the order of questions and answer options.
+- Supports filtering questions based on a specified range.
 - Generates a new .docx file (randoms.docx) with:
   - Questions and their shuffled answer choices.
   - An answer summary section at the end (answers displayed in white).
@@ -60,11 +61,18 @@ D. Rome;[*]
 2. Run the script using the command line with the following parameters:
    1. **directory**: The path to your folder containing questions.docx.
    1. **count**: The number of questions to select randomly.
+   1. **range** (optional): The range of question numbers to select from (e.g., range=10,20).
 
-For example, to select 5 random questions:
+For example, to select 5 random questions from a given folder:
 
 ```bash
 npm run dev directory="path/to/your/folder" count=5
+```
+
+For example, to select 5 random questions from question numbers 10 to 20:
+
+```bash
+npm run dev directory="path/to/your/folder" count=5 range=10,20
 ```
 
 The script will generate a file named randoms.docx in the same folder.
@@ -78,13 +86,12 @@ The generated **randoms.docx** file contains:
 - **Answer Summary:**
   At the end of the document, a summary is appended in white text showing the correct answer for each question in the following format:
 
+```bash
 answers:[
-
-{Q: 1; A: A},
-
-{Q: 2; A: B},
-
+ {Q: 1; A: A},
+ {Q: 2; A: B},
 ]
+```
 
 ## Dependencies
 
